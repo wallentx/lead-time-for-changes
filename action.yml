@@ -46,12 +46,18 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Setup GH CLI
+      uses: sersoft-gmbh/setup-gh-cli-action@main
+      with:
+        version: stable
     - name: Run DORA lead time for changes
       id: lead-time
-      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      shell: bash
       run: |
-         $result = ${{ github.action_path }}/src/leadtimeforchanges.ps1 -ownerRepo "${{ inputs.owner-repo }}" -workflows "${{ inputs.workflows }}" -branch "${{ inputs.default-branch }}" -numberOfDays ${{ inputs.number-of-days }} -commitCountingMethod ${{ inputs.commit-counting-method }} -patToken "${{ inputs.pat-token }}" -actionsToken "${{ inputs.actions-token }}" -appId "${{ inputs.app-id }}" -appInstallationId "${{ inputs.app-install-id }}" -appPrivateKey "${{ inputs.app-private-key }}"             
-         $filePath="dora-lead-time-markdown.md"
-         Set-Content -Path $filePath -Value $result
-         "markdown-file=$filePath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-         Write-Output $result >> $env:GITHUB_STEP_SUMMARY
+        result=$(bash ${{ github.action_path }}/src/leadtimeforchanges.sh -o "${{ inputs.owner-repo }}" -w "${{ inputs.workflows }}" -b "${{ inputs.default-branch }}" -n "${{ inputs.number-of-days }}" -c "${{ inputs.commit-counting-method }}" -p "${{ inputs.pat-token }}" -a "${{ inputs.actions-token }}" -i "${{ inputs.app-id }}" -I "${{ inputs.app-install-id }}" -k "${{ inputs.app-private-key }}")
+        filePath="dora-lead-time-markdown.md"
+        echo "$result" > $filePath
+        echo "markdown-file=$filePath" >> $GITHUB_OUTPUT
+        echo "$result" >> $GITHUB_STEP_SUMMARY
